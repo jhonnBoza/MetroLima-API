@@ -11,7 +11,10 @@ echo "📦 Paso 1: Verificando base de datos..."
 python manage.py showmigrations 2>&1 | head -20 || echo "⚠️ No se pueden mostrar migraciones aún"
 
 echo "📦 Paso 2: Ejecutando migraciones..."
-python manage.py migrate --noinput
+echo "   - Aplicando todas las migraciones (incluyendo syncdb)..."
+python manage.py migrate --run-syncdb --noinput
+echo "   - Verificando migraciones de stations específicamente..."
+python manage.py migrate stations --noinput || python manage.py migrate --noinput
 
 echo "📦 Paso 3: Verificando que las tablas existan..."
 python -c "
@@ -22,15 +25,22 @@ cursor = connection.cursor()
 cursor.execute(\"SELECT name FROM sqlite_master WHERE type='table';\")
 tables = [row[0] for row in cursor.fetchall()]
 print(f'✅ Tablas encontradas: {len(tables)}')
-if 'auth_user' in tables:
-    print('✅ Tabla auth_user existe')
-else:
-    print('❌ ERROR: Tabla auth_user NO existe')
+print(f'   Tablas: {tables}')
+required_tables = ['auth_user', 'stations_station', 'django_migrations', 'django_content_type', 'django_session']
+missing = [t for t in required_tables if t not in tables]
+if missing:
+    print(f'❌ ERROR: Faltan tablas: {missing}')
     exit(1)
+else:
+    print('✅ Todas las tablas requeridas existen')
 " || {
     echo "❌ ERROR: Las tablas no se crearon correctamente"
-    echo "🔄 Intentando crear tablas manualmente..."
+    echo "🔄 Forzando creación de todas las tablas..."
     python manage.py migrate --run-syncdb --noinput
+    python manage.py migrate --fake-initial --noinput
+    python manage.py migrate --noinput
+    echo "🔄 Verificando nuevamente..."
+    python manage.py showmigrations
 }
 
 echo "✅ Migraciones completadas correctamente"
