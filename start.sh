@@ -23,19 +23,28 @@ print(f'Ruta de BD: {settings.DATABASES[\"default\"][\"NAME\"]}')
 print(f'Directorio existe: {os.path.exists(os.path.dirname(settings.DATABASES[\"default\"][\"NAME\"]))}')
 "
 
-echo "   - Aplicando todas las migraciones con syncdb..."
-python manage.py migrate --run-syncdb --noinput
+echo "   - Aplicando todas las migraciones con syncdb (FORZADO)..."
+# Forzar creación de todas las tablas
+python manage.py migrate --run-syncdb --noinput 2>&1
 MIGRATE_EXIT=$?
 
-if [ $MIGRATE_EXIT -ne 0 ]; then
-    echo "⚠️ Primera migración falló, intentando de nuevo..."
-    python manage.py migrate --noinput
-    python manage.py migrate --run-syncdb --noinput
-fi
+echo "   - Verificando resultado de migración (exit code: $MIGRATE_EXIT)..."
 
-echo "   - Aplicando migraciones de stations específicamente..."
-python manage.py migrate stations --noinput || echo "⚠️ Migración de stations falló, continuando..."
-python manage.py migrate --noinput
+if [ $MIGRATE_EXIT -ne 0 ]; then
+    echo "⚠️ Primera migración falló, intentando métodos alternativos..."
+    # Método 1: Migración normal
+    python manage.py migrate --noinput 2>&1
+    # Método 2: Syncdb de nuevo
+    python manage.py migrate --run-syncdb --noinput 2>&1
+    # Método 3: Migración específica de stations
+    python manage.py migrate stations --noinput 2>&1 || true
+    # Método 4: Migración general de nuevo
+    python manage.py migrate --noinput 2>&1
+else
+    echo "   - Migración inicial exitosa, aplicando migraciones adicionales..."
+    python manage.py migrate stations --noinput 2>&1 || true
+    python manage.py migrate --noinput 2>&1
+fi
 
 echo "📦 Paso 3: Verificando que las tablas existan..."
 python -c "
