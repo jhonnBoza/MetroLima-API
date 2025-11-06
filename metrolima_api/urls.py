@@ -8,12 +8,24 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.http import JsonResponse
+
+def root_view(request):
+    """Vista simple para la raíz del sitio"""
+    return JsonResponse({
+        'message': 'MetroLima API',
+        'version': '1.0',
+        'endpoints': {
+            'admin': '/admin/',
+            'api': '/api/stations/',
+        }
+    })
 
 urlpatterns = [
+    path('', root_view, name='root'),
     path('admin/', admin.site.urls),
     path('api/', include('stations.urls')),
 ]
 
-# Para servir archivos de media en desarrollo
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Para servir archivos de media en desarrollo y producción
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

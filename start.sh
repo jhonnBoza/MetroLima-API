@@ -34,6 +34,21 @@ else:
 }
 
 echo "✅ Migraciones completadas correctamente"
-echo "🚀 Paso 4: Iniciando servidor Gunicorn..."
+
+echo "👤 Paso 4: Verificando superusuario..."
+python -c "
+import django
+django.setup()
+from django.contrib.auth import get_user_model
+User = get_user_model()
+if not User.objects.filter(username='admin').exists():
+    print('⚠️ No existe superusuario, creando uno...')
+    User.objects.create_superuser('admin', 'admin@metrolima.com', 'admin123')
+    print('✅ Superusuario creado: admin / admin123')
+else:
+    print('✅ Superusuario ya existe')
+" || echo "⚠️ No se pudo verificar/crear superusuario (puede ser normal si ya existe)"
+
+echo "🚀 Paso 5: Iniciando servidor Gunicorn..."
 exec gunicorn metrolima_api.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 2 --timeout 120
 
