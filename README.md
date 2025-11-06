@@ -62,3 +62,4 @@ CORS_ALLOW_ALL_ORIGINS=True
 
 Este proyecto está configurado para desplegarse en Render. Ver la documentación de Render para más detalles.
 
+

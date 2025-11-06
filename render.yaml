@@ -2,7 +2,7 @@ services:
   - type: web
     name: metrolima-api
     env: python
-    buildCommand: chmod +x build.sh && ./build.sh || pip install -r requirements.txt && python manage.py migrate --noinput && python manage.py collectstatic --noinput
+    buildCommand: pip install -r requirements.txt && python manage.py migrate --noinput && python manage.py collectstatic --noinput --clear
     startCommand: gunicorn metrolima_api.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120
     envVars:
       - key: DJANGO_SETTINGS_MODULE
