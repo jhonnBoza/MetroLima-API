@@ -8,9 +8,38 @@ https://docs.djangoproject.com/en/5.2/howto/deployment/wsgi/
 """
 
 import os
+import subprocess
+import sys
 
 from django.core.wsgi import get_wsgi_application
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'metrolima_api.settings')
 
-application = get_wsgi_application()
+# Ejecutar migraciones automáticamente al iniciar (solo si no existen las tablas)
+try:
+    application = get_wsgi_application()
+    
+    # Verificar si las tablas existen, si no, ejecutar migraciones
+    from django.db import connection
+    cursor = connection.cursor()
+    try:
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='auth_user';")
+        tables = cursor.fetchall()
+        if not tables:
+            print("⚠️ Tabla auth_user no existe, ejecutando migraciones...")
+            from django.core.management import call_command
+            call_command('migrate', '--run-syncdb', verbosity=0, interactive=False)
+            print("✅ Migraciones ejecutadas desde wsgi.py")
+    except Exception as e:
+        print(f"⚠️ Error verificando tablas: {e}")
+        # Intentar ejecutar migraciones de todas formas
+        try:
+            from django.core.management import call_command
+            call_command('migrate', '--run-syncdb', verbosity=0, interactive=False)
+            print("✅ Migraciones ejecutadas desde wsgi.py (fallback)")
+        except Exception as migrate_error:
+            print(f"❌ Error ejecutando migraciones: {migrate_error}")
+except Exception as e:
+    print(f"❌ Error inicializando aplicación: {e}")
+    # Aún así, crear la aplicación para que el servidor inicie
+    application = get_wsgi_application()
