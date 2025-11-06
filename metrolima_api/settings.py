@@ -84,16 +84,29 @@ WSGI_APPLICATION = 'metrolima_api.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 # Usar PostgreSQL en producción (Render) o SQLite en desarrollo
-if config('DATABASE_URL', default=None):
+DATABASE_URL = config('DATABASE_URL', default=None)
+if DATABASE_URL:
     import dj_database_url
     DATABASES = {
-        'default': dj_database_url.config(default=config('DATABASE_URL'))
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
 else:
+    # SQLite para desarrollo local
+    # En Render, asegurar que la ruta sea absoluta y accesible
+    db_path = BASE_DIR / 'db.sqlite3'
+    # Crear directorio si no existe
+    db_path.parent.mkdir(parents=True, exist_ok=True)
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
+            'NAME': str(db_path),  # Usar string en lugar de Path para compatibilidad
+            'OPTIONS': {
+                'timeout': 20,  # Timeout para evitar bloqueos
+            },
         }
     }
 

@@ -12,9 +12,16 @@ echo "📦 Paso 1: Verificando base de datos..."
 python manage.py showmigrations 2>&1 | head -20 || echo "⚠️ No se pueden mostrar migraciones aún"
 
 echo "📦 Paso 2: Ejecutando migraciones FORZADAS..."
-echo "   - Eliminando archivo de BD si existe (para empezar limpio)..."
-rm -f db.sqlite3 2>/dev/null || true
-rm -f db.sqlite3-journal 2>/dev/null || true
+echo "   - Verificando ruta de base de datos..."
+python -c "
+import os
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'metrolima_api.settings')
+import django
+django.setup()
+from django.conf import settings
+print(f'Ruta de BD: {settings.DATABASES[\"default\"][\"NAME\"]}')
+print(f'Directorio existe: {os.path.exists(os.path.dirname(settings.DATABASES[\"default\"][\"NAME\"]))}')
+"
 
 echo "   - Aplicando todas las migraciones con syncdb..."
 python manage.py migrate --run-syncdb --noinput
@@ -27,7 +34,7 @@ if [ $MIGRATE_EXIT -ne 0 ]; then
 fi
 
 echo "   - Aplicando migraciones de stations específicamente..."
-python manage.py migrate stations --noinput
+python manage.py migrate stations --noinput || echo "⚠️ Migración de stations falló, continuando..."
 python manage.py migrate --noinput
 
 echo "📦 Paso 3: Verificando que las tablas existan..."
