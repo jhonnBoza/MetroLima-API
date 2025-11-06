@@ -111,9 +111,13 @@ class Command(BaseCommand):
 
         except Exception as e:
             self.stdout.write(
-                self.style.ERROR(f'❌ Error: {e}')
+                self.style.ERROR(f'❌ Error al crear/actualizar superusuario: {e}')
             )
             import traceback
             self.stdout.write(self.style.ERROR(traceback.format_exc()))
-            raise
+            # No hacer raise para que no detenga el servidor
+            # El servidor puede iniciar sin el superusuario
+            self.stdout.write(
+                self.style.WARNING('⚠️ Continuando con el inicio del servidor...')
+            )
 
