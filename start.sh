@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Script de inicio que ejecuta migraciones antes de iniciar gunicorn
 
-# NO usar set -e aquí porque queremos manejar errores manualmente
-set +e
+# Usar set -e para detener si hay errores críticos
+set -e
 
 echo "=========================================="
 echo "🚀 Iniciando aplicación Django"
@@ -12,39 +12,10 @@ echo "📦 Paso 1: Verificando base de datos..."
 python manage.py showmigrations 2>&1 | head -20 || echo "⚠️ No se pueden mostrar migraciones aún"
 
 echo "📦 Paso 2: Ejecutando migraciones FORZADAS..."
-echo "   - Verificando ruta de base de datos..."
-python -c "
-import os
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'metrolima_api.settings')
-import django
-django.setup()
-from django.conf import settings
-print(f'Ruta de BD: {settings.DATABASES[\"default\"][\"NAME\"]}')
-print(f'Directorio existe: {os.path.exists(os.path.dirname(settings.DATABASES[\"default\"][\"NAME\"]))}')
-"
-
-echo "   - Aplicando todas las migraciones con syncdb (FORZADO)..."
-# Forzar creación de todas las tablas
-python manage.py migrate --run-syncdb --noinput 2>&1
-MIGRATE_EXIT=$?
-
-echo "   - Verificando resultado de migración (exit code: $MIGRATE_EXIT)..."
-
-if [ $MIGRATE_EXIT -ne 0 ]; then
-    echo "⚠️ Primera migración falló, intentando métodos alternativos..."
-    # Método 1: Migración normal
-    python manage.py migrate --noinput 2>&1
-    # Método 2: Syncdb de nuevo
-    python manage.py migrate --run-syncdb --noinput 2>&1
-    # Método 3: Migración específica de stations
-    python manage.py migrate stations --noinput 2>&1 || true
-    # Método 4: Migración general de nuevo
-    python manage.py migrate --noinput 2>&1
-else
-    echo "   - Migración inicial exitosa, aplicando migraciones adicionales..."
-    python manage.py migrate stations --noinput 2>&1 || true
-    python manage.py migrate --noinput 2>&1
-fi
+echo "   - Aplicando todas las migraciones (esto crea todas las tablas)..."
+python manage.py migrate --run-syncdb --noinput
+echo "   - Aplicando migraciones adicionales..."
+python manage.py migrate --noinput
 
 echo "📦 Paso 3: Verificando que las tablas existan..."
 python -c "
