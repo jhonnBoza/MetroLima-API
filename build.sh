@@ -9,10 +9,14 @@ echo "🔧 Instalando dependencias..."
 pip install -r requirements.txt
 
 echo "📦 Ejecutando migraciones..."
-python manage.py migrate --noinput || echo "⚠️ Advertencia: Error en migraciones (puede ser normal si la BD no existe aún)"
+# Asegurar que el directorio de la base de datos exista
+mkdir -p $(dirname db.sqlite3) 2>/dev/null || true
+
+# Ejecutar migraciones (esto crea todas las tablas necesarias)
+python manage.py migrate --noinput
 
 echo "📁 Recopilando archivos estáticos..."
-python manage.py collectstatic --noinput --clear || echo "⚠️ Advertencia: Error al recopilar estáticos"
+python manage.py collectstatic --noinput --clear
 
 echo "✅ Build completado"
 
