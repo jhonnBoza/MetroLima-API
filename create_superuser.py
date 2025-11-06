@@ -53,8 +53,8 @@ try:
         if user.check_password(password):
             print(f'✅ Verificación: La contraseña es correcta')
         else:
-            print(f'❌ ERROR: La contraseña no coincide después de guardar')
-            sys.exit(1)
+            print(f'⚠️ ADVERTENCIA: La contraseña no coincide después de guardar')
+            # No hacer sys.exit(1) para que no detenga el servidor
 
         # Mostrar información final
         print('')
@@ -69,5 +69,6 @@ except Exception as e:
     print(f'❌ Error al crear/actualizar superusuario: {e}')
     import traceback
     traceback.print_exc()
-    sys.exit(1)
+    # No hacer sys.exit(1) para que no detenga el servidor
+    print('⚠️ Continuando con el inicio del servidor...')
 
