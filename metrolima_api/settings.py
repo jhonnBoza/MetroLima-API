@@ -30,20 +30,29 @@ DEBUG = config('DEBUG', default=True, cast=bool)
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*').split(',')
 
 # Configuración CSRF para Render (importante para HTTPS)
-CSRF_TRUSTED_ORIGINS = config(
-    'CSRF_TRUSTED_ORIGINS', 
-    default='https://metrolima-api.onrender.com'
-).split(',')
-# En producción con HTTPS, las cookies deben ser seguras
-# En Render, detectar automáticamente si estamos en producción
-is_production = config('RENDER', default=False, cast=bool) or 'onrender.com' in config('ALLOWED_HOSTS', default='')
-CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=is_production, cast=bool)
-SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=is_production, cast=bool)
-# Permitir cookies en HTTPS
+# Detectar si estamos en Render
+RENDER_EXTERNAL_HOSTNAME = config('RENDER_EXTERNAL_HOSTNAME', default=None)
+if RENDER_EXTERNAL_HOSTNAME:
+    CSRF_TRUSTED_ORIGINS = [f'https://{RENDER_EXTERNAL_HOSTNAME}']
+else:
+    CSRF_TRUSTED_ORIGINS = config(
+        'CSRF_TRUSTED_ORIGINS', 
+        default='https://metrolima-api.onrender.com'
+    ).split(',')
+
+# En producción con HTTPS (Render), las cookies deben ser seguras
+# Render siempre usa HTTPS, así que detectamos si estamos en Render
+is_render = config('RENDER', default=False, cast=bool) or RENDER_EXTERNAL_HOSTNAME is not None
+CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=is_render, cast=bool)
+SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=is_render, cast=bool)
+# Permitir cookies en HTTPS - Render usa proxy
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # Configuración adicional para CSRF
 CSRF_COOKIE_HTTPONLY = False  # Permitir acceso desde JavaScript si es necesario
 CSRF_USE_SESSIONS = False  # Usar cookies en lugar de sesiones para CSRF
+# Permitir cookies SameSite para que funcionen en HTTPS
+CSRF_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SAMESITE = 'Lax'
 
 
 # Application definition
