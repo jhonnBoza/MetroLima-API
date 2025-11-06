@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Script de inicio que ejecuta migraciones antes de iniciar gunicorn
 
-set -e
+# NO usar set -e aquí porque queremos manejar errores manualmente
+set +e
 
 echo "=========================================="
 echo "🚀 Iniciando aplicación Django"
@@ -10,11 +11,24 @@ echo "=========================================="
 echo "📦 Paso 1: Verificando base de datos..."
 python manage.py showmigrations 2>&1 | head -20 || echo "⚠️ No se pueden mostrar migraciones aún"
 
-echo "📦 Paso 2: Ejecutando migraciones..."
-echo "   - Aplicando todas las migraciones (incluyendo syncdb)..."
+echo "📦 Paso 2: Ejecutando migraciones FORZADAS..."
+echo "   - Eliminando archivo de BD si existe (para empezar limpio)..."
+rm -f db.sqlite3 2>/dev/null || true
+rm -f db.sqlite3-journal 2>/dev/null || true
+
+echo "   - Aplicando todas las migraciones con syncdb..."
 python manage.py migrate --run-syncdb --noinput
-echo "   - Verificando migraciones de stations específicamente..."
-python manage.py migrate stations --noinput || python manage.py migrate --noinput
+MIGRATE_EXIT=$?
+
+if [ $MIGRATE_EXIT -ne 0 ]; then
+    echo "⚠️ Primera migración falló, intentando de nuevo..."
+    python manage.py migrate --noinput
+    python manage.py migrate --run-syncdb --noinput
+fi
+
+echo "   - Aplicando migraciones de stations específicamente..."
+python manage.py migrate stations --noinput
+python manage.py migrate --noinput
 
 echo "📦 Paso 3: Verificando que las tablas existan..."
 python -c "
@@ -35,12 +49,34 @@ else:
     print('✅ Todas las tablas requeridas existen')
 " || {
     echo "❌ ERROR: Las tablas no se crearon correctamente"
-    echo "🔄 Forzando creación de todas las tablas..."
+    echo "🔄 FORZANDO creación de todas las tablas (último intento)..."
+    # Eliminar BD y empezar de cero
+    rm -f db.sqlite3 db.sqlite3-journal 2>/dev/null || true
+    # Crear todas las tablas desde cero
     python manage.py migrate --run-syncdb --noinput
-    python manage.py migrate --fake-initial --noinput
     python manage.py migrate --noinput
-    echo "🔄 Verificando nuevamente..."
-    python manage.py showmigrations
+    python manage.py migrate stations --noinput
+    # Verificar nuevamente
+    python -c "
+import os
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'metrolima_api.settings')
+import django
+django.setup()
+from django.db import connection
+cursor = connection.cursor()
+cursor.execute('SELECT name FROM sqlite_master WHERE type=\"table\";')
+tables = [row[0] for row in cursor.fetchall()]
+print(f'Tablas después del intento final: {tables}')
+if 'auth_user' not in tables or 'stations_station' not in tables:
+    print('❌ ERROR CRÍTICO: Las tablas aún no existen')
+    exit(1)
+    "
+    if [ $? -ne 0 ]; then
+        echo "❌❌❌ ERROR CRÍTICO: No se pudieron crear las tablas"
+        echo "🔄 Mostrando estado de migraciones..."
+        python manage.py showmigrations
+        exit(1)
+    fi
 }
 
 echo "✅ Migraciones completadas correctamente"
