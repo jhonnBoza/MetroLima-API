@@ -4,13 +4,13 @@ Script único que inicializa todo: superusuario y estaciones
 """
 import os
 import sys
-import json
 import django
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'metrolima_api.settings')
 django.setup()
 
 from django.contrib.auth import get_user_model
+from django.core.management import call_command
 from stations.models import Station
 
 User = get_user_model()
@@ -52,80 +52,56 @@ def init_all():
     except Exception as e:
         print(f'⚠️ Error con superusuario: {e}')
     
-    # 2. Cargar estaciones desde JSON
-    print('\n📋 Paso 2: Cargando estaciones desde JSON...')
+    # 2. Migrar estaciones de "Línea 3" a "Metropolitano"
+    print('\n📋 Paso 2: Migrando estaciones de "Línea 3" a "Metropolitano"...')
+    try:
+        stations_l3 = Station.objects.filter(line='Línea 3')
+        count_l3 = stations_l3.count()
+        
+        if count_l3 > 0:
+            updated = stations_l3.update(line='Metropolitano')
+            print(f'✅ Se actualizaron {updated} estaciones de "Línea 3" a "Metropolitano"')
+        else:
+            print('  No se encontraron estaciones con "Línea 3"')
+    except Exception as e:
+        print(f'⚠️ Error al migrar estaciones: {e}')
     
-    # Buscar el archivo JSON
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    possible_paths = [
-        os.path.join(base_dir, 'stations_data.json'),
-        os.path.join(os.getcwd(), 'stations_data.json'),
-        'stations_data.json',
-    ]
-    
-    json_path = None
-    for path in possible_paths:
-        if os.path.exists(path):
-            json_path = path
-            break
-    
-    if not json_path:
-        print(f'❌ ERROR: No se encontró stations_data.json')
-        print(f'   Buscado en: {possible_paths}')
+    # 3. Poblar todas las estaciones (incluyendo corredores)
+    print('\n📋 Paso 3: Poblando todas las estaciones (incluyendo corredores)...')
+    try:
+        call_command('populate_stations', verbosity=1)
+        print('✅ Comando populate_stations ejecutado exitosamente')
+    except Exception as e:
+        print(f'❌ Error al poblar estaciones: {e}')
+        import traceback
+        traceback.print_exc()
         return False
     
-    print(f'✅ Archivo encontrado: {json_path}')
-    
-    # Leer y cargar estaciones
+    # 4. Verificar resultados
+    print('\n📊 Paso 4: Verificando resultados...')
     try:
-        with open(json_path, 'r', encoding='utf-8') as f:
-            all_stations = json.load(f)
+        total = Station.objects.count()
+        print(f'\n📊 Total de estaciones en BD: {total}')
         
-        print(f'📊 Total de estaciones en JSON: {len(all_stations)}')
+        # Contar por línea
+        por_linea = {}
+        for line in ['Línea 1', 'Línea 2', 'Metropolitano', 'Corredor Morado', 'Corredor Azul']:
+            count = Station.objects.filter(line=line).count()
+            por_linea[line] = count
+            print(f'   - {line}: {count} estaciones')
         
-        created_count = 0
-        updated_count = 0
+        # Verificar que no queden estaciones con "Línea 3"
+        remaining_l3 = Station.objects.filter(line='Línea 3').count()
+        if remaining_l3 > 0:
+            print(f'\n⚠️ ADVERTENCIA: Aún quedan {remaining_l3} estaciones con "Línea 3"')
         
-        for station_data in all_stations:
-            try:
-                station, created = Station.objects.update_or_create(
-                    id=station_data['id'],
-                    defaults={
-                        'name': station_data['name'],
-                        'line': station_data['line'],
-                        'address': station_data['address'],
-                        'latitude': station_data['latitude'],
-                        'longitude': station_data['longitude'],
-                        'description': station_data.get('description', ''),
-                        'opening_time': station_data.get('opening_time', '05:00'),
-                        'closing_time': station_data.get('closing_time', '23:00'),
-                        'status': station_data.get('status', 'OPERATIONAL'),
-                    }
-                )
-                if created:
-                    created_count += 1
-                else:
-                    updated_count += 1
-            except Exception as e:
-                print(f'❌ Error con {station_data.get("name", "desconocida")}: {e}')
-        
-        print(f'\n✅ Estaciones cargadas:')
-        print(f'   - Creadas: {created_count}')
-        print(f'   - Actualizadas: {updated_count}')
-        print(f'   - Total: {len(all_stations)}')
-        
-        # Verificar que se guardaron
-        total_in_db = Station.objects.count()
-        print(f'\n📊 Total de estaciones en BD: {total_in_db}')
-        
-        if total_in_db == 0:
+        if total == 0:
             print('⚠️ ADVERTENCIA: No hay estaciones en la base de datos!')
             return False
         
         return True
-        
     except Exception as e:
-        print(f'❌ Error al cargar estaciones: {e}')
+        print(f'❌ Error al verificar resultados: {e}')
         import traceback
         traceback.print_exc()
         return False
