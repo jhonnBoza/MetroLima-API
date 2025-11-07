@@ -16,11 +16,31 @@ def populate_stations():
     """Carga todas las estaciones desde el archivo JSON"""
     
     # Obtener la ruta del archivo JSON
+    # Intentar varias rutas posibles
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    json_path = os.path.join(base_dir, 'stations_data.json')
+    possible_paths = [
+        os.path.join(base_dir, 'stations_data.json'),
+        os.path.join(os.getcwd(), 'stations_data.json'),
+        'stations_data.json',
+    ]
+    
+    json_path = None
+    for path in possible_paths:
+        if os.path.exists(path):
+            json_path = path
+            break
     
     print('🚀 Iniciando carga de estaciones desde JSON...')
-    print(f'📁 Archivo: {json_path}')
+    print(f'📁 Directorio actual: {os.getcwd()}')
+    print(f'📁 Directorio del script: {base_dir}')
+    
+    if not json_path:
+        print(f'❌ ERROR: No se encontró el archivo stations_data.json')
+        print(f'   Buscado en: {possible_paths}')
+        print(f'   Archivos en directorio actual: {os.listdir(os.getcwd())}')
+        sys.exit(1)
+    
+    print(f'✅ Archivo encontrado: {json_path}')
     
     # Leer el archivo JSON
     try:
