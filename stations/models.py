@@ -8,9 +8,15 @@ class Station(models.Model):
         ('CLOSED', 'Cerrada'),
     ]
     
+    LINE_CHOICES = [
+        ('Línea 1', 'Línea 1'),
+        ('Línea 2', 'Línea 2'),
+        ('Línea 3', 'Línea 3'),
+    ]
+    
     id = models.CharField(primary_key=True, max_length=50)  # "LIM-01"
     name = models.CharField(max_length=200)
-    line = models.CharField(max_length=50)  # "Línea 1", "Línea 2", etc.
+    line = models.CharField(max_length=50, choices=LINE_CHOICES)  # "Línea 1", "Línea 2", etc.
     address = models.TextField()
     latitude = models.DecimalField(max_digits=9, decimal_places=6)
     longitude = models.DecimalField(max_digits=9, decimal_places=6)
