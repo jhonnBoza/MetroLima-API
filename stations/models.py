@@ -12,6 +12,8 @@ class Station(models.Model):
         ('Línea 1', 'Línea 1'),
         ('Línea 2', 'Línea 2'),
         ('Metropolitano', 'Metropolitano'),
+        ('Corredor Morado', 'Corredor Morado'),
+        ('Corredor Azul', 'Corredor Azul'),
     ]
     
     id = models.CharField(primary_key=True, max_length=50)  # "LIM-01"
