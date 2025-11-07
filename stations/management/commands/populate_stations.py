@@ -253,12 +253,12 @@ class Command(BaseCommand):
             },
         ]
 
-        # Estaciones de la Línea 3 - En construcción
+        # Estaciones del Metropolitano - En construcción
         linea3_stations = [
             {
                 'id': 'LIM-21',
                 'name': 'Comas',
-                'line': 'Línea 3',
+                'line': 'Metropolitano',
                 'address': 'Av. Comas',
                 'latitude': -11.9800,
                 'longitude': -77.0700,
@@ -270,7 +270,7 @@ class Command(BaseCommand):
             {
                 'id': 'LIM-22',
                 'name': 'Independencia',
-                'line': 'Línea 3',
+                'line': 'Metropolitano',
                 'address': 'Av. Independencia',
                 'latitude': -12.0000,
                 'longitude': -77.0500,
@@ -282,7 +282,7 @@ class Command(BaseCommand):
             {
                 'id': 'LIM-23',
                 'name': 'Rímac',
-                'line': 'Línea 3',
+                'line': 'Metropolitano',
                 'address': 'Av. Rímac',
                 'latitude': -12.0200,
                 'longitude': -77.0300,
@@ -294,7 +294,7 @@ class Command(BaseCommand):
             {
                 'id': 'LIM-24',
                 'name': 'Cercado de Lima',
-                'line': 'Línea 3',
+                'line': 'Metropolitano',
                 'address': 'Av. Cercado',
                 'latitude': -12.0464,
                 'longitude': -77.0428,
@@ -306,7 +306,7 @@ class Command(BaseCommand):
             {
                 'id': 'LIM-25',
                 'name': 'La Victoria',
-                'line': 'Línea 3',
+                'line': 'Metropolitano',
                 'address': 'Av. La Victoria',
                 'latitude': -12.0600,
                 'longitude': -77.0200,
@@ -318,7 +318,7 @@ class Command(BaseCommand):
             {
                 'id': 'LIM-26',
                 'name': 'Lince',
-                'line': 'Línea 3',
+                'line': 'Metropolitano',
                 'address': 'Av. Lince',
                 'latitude': -12.0800,
                 'longitude': -77.0300,
@@ -330,7 +330,7 @@ class Command(BaseCommand):
             {
                 'id': 'LIM-27',
                 'name': 'Jesús María',
-                'line': 'Línea 3',
+                'line': 'Metropolitano',
                 'address': 'Av. Jesús María',
                 'latitude': -12.0900,
                 'longitude': -77.0400,
@@ -342,7 +342,7 @@ class Command(BaseCommand):
             {
                 'id': 'LIM-28',
                 'name': 'Magdalena',
-                'line': 'Línea 3',
+                'line': 'Metropolitano',
                 'address': 'Av. Magdalena',
                 'latitude': -12.1000,
                 'longitude': -77.0500,
@@ -354,7 +354,7 @@ class Command(BaseCommand):
             {
                 'id': 'LIM-29',
                 'name': 'Pueblo Libre',
-                'line': 'Línea 3',
+                'line': 'Metropolitano',
                 'address': 'Av. Pueblo Libre',
                 'latitude': -12.0950,
                 'longitude': -77.0600,
@@ -366,7 +366,7 @@ class Command(BaseCommand):
             {
                 'id': 'LIM-30',
                 'name': 'Chorrillos',
-                'line': 'Línea 3',
+                'line': 'Metropolitano',
                 'address': 'Av. Chorrillos',
                 'latitude': -12.1600,
                 'longitude': -77.0100,
